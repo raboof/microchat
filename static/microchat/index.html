@@ -1,0 +1,19 @@
+<html>
+  <body>
+    hello world
+
+    <script>
+    var s = document.location.search.substring(1).split('&');
+
+    window.GET = {};
+
+    for(var i  = 0; i < s.length; i++) {
+        var parts = s[i].split('=');
+        GET[unescape(parts[0])] = unescape(parts[1]);
+    }
+ 
+    document.write(GET.sessionId)
+
+    </script>
+  </body>
+</html>
