@@ -6,6 +6,7 @@
 </head>
 <body>
 <h1>Welcome <span id="username">user</span> @ Microchat</h1>
+Users: <span id="users">...</span>
 <form onSubmit='sock.send(document.getElementById("input").value); return false;'>
   Input text: <input id="input" focus="true" />
   <input type="submit" disabled="true" id="send" value="Send" />
@@ -31,6 +32,7 @@ status: <span id="status">connecting...</span>
     }
 
     var userUrl = '/api/user?sessionId=' + GET.sessionId
+    var usersUrl = '/api/users?sessionId=' + GET.sessionId
     //document.write('<br><a href="' + userUrl + '">user</a>')
     //document.write('<br><a href="/api/users">users</a>')
     //document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
@@ -40,8 +42,15 @@ status: <span id="status">connecting...</span>
       success: function (data) {
         $('#username').text(data.username);
       }
-    })
-  })
+    });
+
+    $.ajax(usersUrl, {
+      dataType: 'json',
+      success: function (data) {
+        $('#users').text(data);
+      }
+    });
+  });
 
 </script>
 
