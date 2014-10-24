@@ -16,6 +16,11 @@ func TestUserFound(t *testing.T) {
 
 	assert.Equal(t, user.SessionId, userAgain.SessionId)
 	assert.Equal(t, user.Name, userAgain.Name)
+
+	repo.RemoveUser(userAgain )
+
+	u := repo.FetchUser("1234")
+	assert.Nil(t, u)
 }
 
 func TestUserNotFound(t *testing.T) {
