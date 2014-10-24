@@ -21,11 +21,9 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 		var closedSession = make(chan struct {})
 		defer func() {
 			user := users[session.ID()]
-			username := "participant"
 			if (user != nil) {
-				username = user.Name
+				chat.Publish("[info] " + user.Name + " left chat")
 			}
-			chat.Publish("[info] " + username + " left chat")
 		}()
 		go func() {
 			reader, _ := chat.SubChannel(nil)
