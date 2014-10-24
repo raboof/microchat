@@ -35,9 +35,7 @@ func handleMessages(w http.ResponseWriter, r *http.Request) {
 func main() {
 	/* pre-provision */
 	user_repo := userrepo.NewUserRepo()
-	user_repo.StoreUser(userrepo.NewUser("1", "name 1"))
-	user_repo.StoreUser(userrepo.NewUser("2", "name 2"))
-	user_repo.StoreUser(userrepo.NewUser("3", "name 3"))
+	user_repo.StoreUser(userrepo.NewUser("987654321", "Hans"))
 
 	/* start listening for domain events in background */
 	eventListener := events.NewDomainEventListener(user_repo)

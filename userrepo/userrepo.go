@@ -13,7 +13,6 @@ func NewUser(sessionId string, name string) *User {
 	user := new(User)
 	user.SessionId = sessionId
 	user.Name = name
-	log.Printf("User with session %s and name %s created", sessionId, name)
 	return user
 }
 
@@ -57,18 +56,23 @@ func (repo *UserRepo) FetchUsers() []User {
 }
 
 func (repo *UserRepo) StoreUser(user *User) {
-	repo.users = append(repo.users, *user)
-	log.Printf("User %s added", user.Name)
+        found := repo.FetchUser(user.SessionId)
+        if found == nil {
+	  repo.users = append(repo.users, *user)
+	  log.Printf("User %s added", user.Name)
+        }
 }
 
-func (repo *UserRepo) RemoveUser(user *User) {
+func (repo *UserRepo) RemoveUser(toBeRemoved  *User) {
+	log.Printf("Remove before %d", len(repo.users) )
 	newUsers := []User{}
 	for _, user := range repo.users {
-		log.Printf("*** Session %s found: %s", user.SessionId, user.Name)
-		if user.SessionId != user.SessionId {
+		if user.SessionId != toBeRemoved.SessionId {
 			newUsers = append(newUsers, user)
-
+		} else {
+			log.Printf("User %s removed", user.Name)
 		}
 	}
         repo.users = newUsers
+	log.Printf("User %s removed: now %d", toBeRemoved.Name, len(repo.users))
 }

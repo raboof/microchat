@@ -63,7 +63,7 @@ func (listener *DomainEventListener) handleEvent(event *sarama.ConsumerEvent) {
 		log.Printf("Event has not enough parameters")
 	} else {
 		eventName, userName, sessionId := s[0], s[1], s[2]
-		user := userrepo.NewUser(userName, sessionId)
+		user := userrepo.NewUser(sessionId,userName)
 		if eventName == "UserLoggedIn" {
 			listener.repo.StoreUser(user)
 		} else if eventName == "UserLoggedOut" {
