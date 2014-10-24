@@ -55,7 +55,7 @@ $(function () {
   window.sendMessage = function () {
     $input = $('#input');
     message = $input.val();
-    sock.send(message);
+    sock.send( GET.sessionId + '\t' + message);
     $input.val('');
   };
 

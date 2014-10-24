@@ -6,6 +6,7 @@ import (
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"github.com/raboof/microchat/userrepo"
 	"net/http"
+	"strings"
 )
 
 var chat pubsub.Publisher
@@ -36,8 +37,13 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 		}()
 		for {
 			if msg, err := session.Recv(); err == nil {
-				log.Println("Got message", msg, user_repo.FetchUser("1"))
-				chat.Publish(msg)
+				parsedMsg := strings.Split(msg, "\t")
+				user := user_repo.FetchUser(parsedMsg[0])
+				if (user == nil) {
+					log.Println("Illegal token received", msg)
+					break
+				}
+				chat.Publish(user.Name + ":" + parsedMsg[1])
 				continue
 			}
 			break
