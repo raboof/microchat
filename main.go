@@ -34,8 +34,10 @@ func handleMessages(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	/* pre-provision */
-	user_repo := userrepo.NewUserRepo()
-	user_repo.StoreUser(userrepo.NewUser("987654321", "Hans"))
+	var user_repo *userrepo.UserRepo
+	user_repo = userrepo.NewUserRepo()
+	user_repo.StoreUser(userrepo.NewUser("5678", "Hans"))
+	user_repo.StoreUser(userrepo.NewUser("1234", "Grietje"))
 
 	/* start listening for domain events in background */
 	eventListener := events.NewDomainEventListener(user_repo)
@@ -48,6 +50,6 @@ func main() {
 	http.HandleFunc("/api/messages", handleMessages)
 	http.Handle("/ws/", websocket.WebsocketHandler(user_repo))
 	http.Handle("/", http.FileServer(http.Dir("./static")))
-	log.Println("Serving at localhost:8088...")
+	log.Println("Start listening for web events at localhost:8088...")
 	log.Fatal(http.ListenAndServe(":8088", nil))
 }

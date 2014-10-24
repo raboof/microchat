@@ -7,12 +7,19 @@ import (
 	"strings"
 )
 
-type DomainEventListener struct {
-	quit chan bool
-	repo *userrepo.UserRepo
+type DomainEventListenerI interface {
+	Start(addressPort string) error
+	Stop()
+	HandleUserLoggedIn(user *userrepo.User)
+	HandleUserLoggedOut(user *userrepo.User)
 }
 
-func NewDomainEventListener(repo *userrepo.UserRepo) *DomainEventListener {
+type DomainEventListener struct {
+	quit chan bool
+	repo userrepo.UserRepoI
+}
+
+func NewDomainEventListener(repo userrepo.UserRepoI) *DomainEventListener {
 	listnr := new(DomainEventListener)
 	listnr.repo = repo
 
@@ -37,6 +44,7 @@ func (listener *DomainEventListener) listenForEvents(hostnamePort string, topic 
 		return err
 	}
 
+	/* create consumer */
 	consumer, err := sarama.NewConsumer(client, topic, 0, consumerGroup, nil)
 	if err != nil {
 		log.Println(err)
@@ -60,18 +68,26 @@ func (listener *DomainEventListener) handleEvent(event *sarama.ConsumerEvent) {
 
 	s := strings.Split(string(event.Value), ",")
 	if len(s) < 3 {
-		log.Printf("Event has not enough parameters")
+		log.Printf("Event incomplete: '%s'", event.Value)
 	} else {
 		eventName, userName, sessionId := s[0], s[1], s[2]
-		user := userrepo.NewUser(sessionId,userName)
+		user := userrepo.NewUser(sessionId, userName)
 		if eventName == "UserLoggedIn" {
-			listener.repo.StoreUser(user)
+			listener.HandleUserLoggedIn(user)
 		} else if eventName == "UserLoggedOut" {
-			listener.repo.RemoveUser(user)
+			listener.HandleUserLoggedOut(user)
 		} else {
 			log.Printf("Unrecognized event %s", eventName)
 		}
 	}
+}
+
+func (listener *DomainEventListener) HandleUserLoggedIn(user *userrepo.User) {
+	listener.repo.StoreUser(user)
+}
+
+func (listener *DomainEventListener) HandleUserLoggedOut(user *userrepo.User) {
+	listener.repo.RemoveUser(user)
 }
 
 func (listener *DomainEventListener) Start(hostnamePort string) {
