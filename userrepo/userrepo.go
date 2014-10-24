@@ -1,18 +1,46 @@
 package userrepo
 
 import (
+	"time"
 )
 
 type User struct {
 	SessionId string
 	Name      string
+        SentMessages []Message	
+        ReceivedMessages []Message	
 }
 
 func NewUser(sessionId string, name string) *User {
 	user := new(User)
 	user.SessionId = sessionId
 	user.Name = name
+	user.SentMessages = []Message{}
+	user.ReceivedMessages = []Message{}
 	return user
+}
+
+func (user *User) AddMsgReceived( msg *Message ) {
+       user.ReceivedMessages = append( user.ReceivedMessages, *msg ) 
+}
+
+func (user *User) AddMsgSent( msg *Message ) {
+       user.SentMessages = append( user.SentMessages, *msg ) 
+}
+
+type Message struct {
+        OriginatorSessionId string
+        MessageText string
+        Timestamp time.Time
+}
+
+func NewMessage( originatorSessionId string, messageText string ) *Message {
+        msg := new(Message)
+        msg.OriginatorSessionId = originatorSessionId
+        msg.MessageText  = messageText
+        msg.Timestamp  = time.Now()
+
+        return msg
 }
 
 type UserRepoI interface {
