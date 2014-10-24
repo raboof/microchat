@@ -13,6 +13,9 @@
     }
  
     document.write(GET.sessionId)
+    document.write('<br><a href="/api/user?sessionId="' + GET.sessionId + '">user</a>')
+    document.write('<br><a href="/api/users">users</a>')
+    document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
 
     </script>
   </body>
