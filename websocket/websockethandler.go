@@ -9,7 +9,7 @@ import (
 var chat pubsub.Publisher
 
 
-var WebsocketHandler = sockjs.NewHandler("/echo", sockjs.DefaultOptions, echoHandler)
+var WebsocketHandler = sockjs.NewHandler("/ws", sockjs.DefaultOptions, echoHandler)
 
 func echoHandler(session sockjs.Session) {
 	log.Println("new sockjs session established")

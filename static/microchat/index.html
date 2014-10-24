@@ -1,9 +1,22 @@
 <html>
 <head>
   <script src="jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+  <script src="app.js"> </script>
 </head>
 <body>
-hello <span id="username">user</span>
+<h1>Welcome <span id="username">user</span> @ Microchat</h1>
+<form onSubmit='sock.send(document.getElementById("input").value); return false;'>
+  Input text: <input id="input" focus="true" />
+  <input type="submit" disabled="true" id="send" value="Send" />
+</form>
+<br/>
+Messages from server:</br>
+<textarea cols=80 rows=20 id="output">
+</textarea>
+<br/>
+status: <span id="status">connecting...</span>
+
 
 <script>
   $(function () {

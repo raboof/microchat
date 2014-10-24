@@ -3,7 +3,7 @@ if (!window.location.origin) { // Some browsers (mainly IE) do not have this pro
 }
 
 
-var sock = new SockJS(window.location.origin+'/echo')
+var sock = new SockJS(window.location.origin+'/ws')
 
 sock.onopen = function() {
 	// console.log('connection open');
