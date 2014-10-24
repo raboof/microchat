@@ -1,7 +1,5 @@
 package userrepo
 
-;
-
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -10,21 +8,21 @@ import (
 func TestUserFound(t *testing.T) {
 	repo := NewUserRepo()
 
-	user := NewUser("1234", "Marc");
+	user := NewUser("1234", "Marc")
 
 	repo.StoreUser(user)
 
-	userAgain := repo.FetchUser("1234");
+	userAgain := repo.FetchUser("1234")
 
-	assert.Equal(t, user.sessionId, userAgain.sessionId)
-	assert.Equal(t, user.name, userAgain.name)
+	assert.Equal(t, user.SessionId, userAgain.SessionId)
+	assert.Equal(t, user.Name, userAgain.Name)
 }
 
 func TestUserNotFound(t *testing.T) {
 	repo := NewUserRepo()
-	user := NewUser("4321", "Eva");
+	user := NewUser("4321", "Eva")
 	repo.StoreUser(user)
 
-	userAgain := repo.FetchUser("1234");
+	userAgain := repo.FetchUser("1234")
 	assert.Nil(t, userAgain)
 }

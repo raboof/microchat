@@ -1,22 +1,22 @@
 package main
 
 import (
-	"log"
 	"fmt"
-	"net/http"
 	"github.com/raboof/microchat/userrepo"
+	"log"
+	"net/http"
 )
 
 func handleUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{ \"username\": \"raboof\" }");
+	fmt.Fprintf(w, "{ \"username\": \"raboof\" }")
 }
 
 func handleUsers(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{ users }");
+	fmt.Fprintf(w, "{ users }")
 }
 
 func handleMessages(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{ messages }");
+	fmt.Fprintf(w, "{ messages }")
 }
 
 func main() {
@@ -30,5 +30,5 @@ func main() {
 	http.HandleFunc("/api/messages", handleMessages)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	log.Println("Serving at localhost:8088...")
-	log.Fatal( http.ListenAndServe(":8088", nil) )
+	log.Fatal(http.ListenAndServe(":8088", nil))
 }
