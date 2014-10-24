@@ -38,6 +38,7 @@ $(function () {
 
   sock.onopen = function () {
     // console.log('connection open');
+    sock.send( GET.sessionId);
     document.getElementById("status").innerHTML = "connected";
     document.getElementById("send").disabled = false;
   };
@@ -55,7 +56,7 @@ $(function () {
   window.sendMessage = function () {
     $input = $('#input');
     message = $input.val();
-    sock.send( GET.sessionId + '\t' + message);
+    sock.send(message);
     $input.val('');
   };
 

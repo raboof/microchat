@@ -6,7 +6,6 @@ import (
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"github.com/raboof/microchat/userrepo"
 	"net/http"
-	"strings"
 )
 
 var chat pubsub.Publisher
@@ -16,6 +15,7 @@ func WebsocketHandler(user_repo *userrepo.UserRepo) http.Handler {
 }
 
 func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
+	users := make(map[string]*userrepo.User)
 	return func(session sockjs.Session) {
 		log.Println("new sockjs session established")
 		var closedSession = make(chan struct {})
@@ -37,13 +37,17 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 		}()
 		for {
 			if msg, err := session.Recv(); err == nil {
-				parsedMsg := strings.Split(msg, "\t")
-				user := user_repo.FetchUser(parsedMsg[0])
+				user := users[session.ID()]
 				if (user == nil) {
-					log.Println("Illegal token received", msg)
-					break
+					user = user_repo.FetchUser(msg)
+					if (user == nil) {
+						log.Println("Not a user id", msg)
+						break
+					}
+					users[session.ID()] = user
+				} else {
+					chat.Publish(user.Name + ":" + msg)
 				}
-				chat.Publish(user.Name + ":" + parsedMsg[1])
 				continue
 			}
 			break
