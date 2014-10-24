@@ -48,7 +48,7 @@ func main() {
 	http.HandleFunc("/api/user", handleUser(user_repo))
 	http.HandleFunc("/api/users", handleUsers(user_repo))
 	http.HandleFunc("/api/messages", handleMessages)
-	http.Handle("/ws/", websocket.WebsocketHandler)
+	http.Handle("/ws/", websocket.WebsocketHandler(user_repo))
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	log.Println("Serving at localhost:8088...")
 	log.Fatal(http.ListenAndServe(":8088", nil))

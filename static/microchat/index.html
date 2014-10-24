@@ -7,7 +7,7 @@
 <body>
 <h1>Welcome <span id="username">user</span> @ Microchat</h1>
 Users: <span id="users">...</span>
-<form onSubmit='sock.send(document.getElementById("input").value); return false;'>
+<form onSubmit='sendMessage(); return false'>
   Input text: <input id="input" focus="true" />
   <input type="submit" disabled="true" id="send" value="Send" />
 </form>
@@ -17,42 +17,6 @@ Messages from server:</br>
 </textarea>
 <br/>
 status: <span id="status">connecting...</span>
-
-
-<script>
-  $(function () {
-    var s = document.location.search.substring(1).split('&');
-    //document.write(document.location)
-
-    var GET = {};
-
-    for (var i = 0; i < s.length; i++) {
-      var parts = s[i].split('=');
-      GET[unescape(parts[0])] = unescape(parts[1]);
-    }
-
-    var userUrl = '/api/user?sessionId=' + GET.sessionId
-    var usersUrl = '/api/users?sessionId=' + GET.sessionId
-    //document.write('<br><a href="' + userUrl + '">user</a>')
-    //document.write('<br><a href="/api/users">users</a>')
-    //document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
-
-    $.ajax(userUrl, {
-      dataType: 'json',
-      success: function (data) {
-        $('#username').text(data.username);
-      }
-    });
-
-    $.ajax(usersUrl, {
-      dataType: 'json',
-      success: function (data) {
-        $('#users').text(data);
-      }
-    });
-  });
-
-</script>
 
 </body>
 </html>
