@@ -19,7 +19,6 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 	return func(session sockjs.Session) {
 		log.Println("new sockjs session established")
 		var closedSession = make(chan struct {})
-		chat.Publish("[info] new participant joined chat")
 		defer chat.Publish("[info] participant left chat")
 		go func() {
 			reader, _ := chat.SubChannel(nil)
@@ -44,9 +43,10 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 						log.Println("Not a user id", msg)
 						break
 					}
+					chat.Publish("[info] " + user.Name + " joined chat")
 					users[session.ID()] = user
 				} else {
-					chat.Publish(user.Name + ":" + msg)
+					chat.Publish(user.Name + ": " + msg)
 				}
 				continue
 			}
