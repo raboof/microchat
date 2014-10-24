@@ -3,7 +3,10 @@
   <script src="jquery-2.1.1.min.js"></script>
 </head>
 <body>
-hello <span id="username">user</span>
+<p>
+Hello <span id="username">user</span>
+<p>
+Users: <span id="users">...</span>
 
 <script>
   $(function () {
@@ -18,6 +21,7 @@ hello <span id="username">user</span>
     }
 
     var userUrl = '/api/user?sessionId=' + GET.sessionId
+    var usersUrl = '/api/users?sessionId=' + GET.sessionId
     //document.write('<br><a href="' + userUrl + '">user</a>')
     //document.write('<br><a href="/api/users">users</a>')
     //document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
@@ -27,8 +31,15 @@ hello <span id="username">user</span>
       success: function (data) {
         $('#username').text(data.username);
       }
-    })
-  })
+    });
+
+    $.ajax(usersUrl, {
+      dataType: 'json',
+      success: function (data) {
+        $('#users').text(data);
+      }
+    });
+  });
 
 </script>
 
