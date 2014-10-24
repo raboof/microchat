@@ -39,7 +39,6 @@ func (repo *UserRepo) FetchUser(sessionId string) *User {
 
 	log.Printf("Repo sise: %d\n", len(repo.users))
 	for _, user := range repo.users {
-		log.Printf("*** Session %s found: %s", user.SessionId, user.Name)
 		if user.SessionId == sessionId {
 			log.Printf("User with session %s found: %s", sessionId, user.Name)
 			return &user
