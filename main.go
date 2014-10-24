@@ -4,6 +4,7 @@ import (
 	"log"
 	"fmt"
 	"net/http"
+        "github.com/raboof/microchat/userrepo"
 )
 
 func handleUser(w http.ResponseWriter, r *http.Request) {
@@ -17,6 +18,11 @@ func handleMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+        user_repo := userrepo.NewUserRepo()
+        user_repo.StoreUser( userrepo.NewUser("1", "name 1") )
+        user_repo.StoreUser( userrepo.NewUser("2", "name 2") )
+        user_repo.StoreUser( userrepo.NewUser("3", "name 3") )
+
 	http.HandleFunc("/api/user", handleUser)
 	http.HandleFunc("/api/users", handleUsers)
 	http.HandleFunc("/api/messages", handleMessages)
