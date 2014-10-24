@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/raboof/microchat/userrepo"
+	"github.com/raboof/microchat/events"
 	"github.com/raboof/microchat/websocket"
 	"log"
 	"net/http"
@@ -33,11 +34,17 @@ func handleMessages(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+        /* pre-provision */
 	user_repo := userrepo.NewUserRepo()
 	user_repo.StoreUser(userrepo.NewUser("1", "name 1"))
 	user_repo.StoreUser(userrepo.NewUser("2", "name 2"))
 	user_repo.StoreUser(userrepo.NewUser("3", "name 3"))
 
+        /* start listening for domain events in background */
+        eventListener := events.NewDomainEventListener()
+        eventListener.Start( "10.0.0.157:9092" );
+
+        /* start listening for web-events */
 	http.HandleFunc("/api/user", handleUser(user_repo))
 	http.HandleFunc("/api/users", handleUsers(user_repo))
 	http.HandleFunc("/api/messages", handleMessages)
