@@ -3,4 +3,4 @@ Running
     go build
     ./microchat
 
-.. will listen on port :8080
+.. will listen on port :8088

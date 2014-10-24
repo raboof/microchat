@@ -29,6 +29,6 @@ func main() {
 	http.HandleFunc("/api/users", handleUsers)
 	http.HandleFunc("/api/messages", handleMessages)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
-	log.Println("Serving at localhost:8080...")
-	log.Fatal( http.ListenAndServe(":8080", nil) )
+	log.Println("Serving at localhost:8088...")
+	log.Fatal( http.ListenAndServe(":8088", nil) )
 }
