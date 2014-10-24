@@ -1,22 +1,36 @@
 <html>
+  <head>
+    <script src="jquery-2.1.1.min.js"></script>
+  </head>
   <body>
-    hello world
+    hello <span id="username">user</span>
 
-    <script>
+<script>
+  $(function() { 
     var s = document.location.search.substring(1).split('&');
+    //document.write(document.location)
 
-    window.GET = {};
+    var GET = {};
 
     for(var i  = 0; i < s.length; i++) {
         var parts = s[i].split('=');
         GET[unescape(parts[0])] = unescape(parts[1]);
     }
  
-    document.write(GET.sessionId)
-    document.write('<br><a href="/api/user?sessionId="' + GET.sessionId + '">user</a>')
-    document.write('<br><a href="/api/users">users</a>')
-    document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
+    var userUrl = '/api/user?sessionId=' + GET.sessionId 
+    //document.write('<br><a href="' + userUrl + '">user</a>')
+    //document.write('<br><a href="/api/users">users</a>')
+    //document.write('<br><a href="/api/messages?sessionId="' + GET.sessionId + '">messages</a>')
+    
+    $.ajax(userUrl, {
+      dataType: 'json',
+      success: function(data) {
+        $('#username').text(data.username);
+      }
+    })
+  })
 
-    </script>
+</script>
+
   </body>
 </html>

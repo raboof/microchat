@@ -7,7 +7,7 @@ import (
 )
 
 func handleUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{ user }");
+	fmt.Fprintf(w, "{ \"username\": \"raboof\" }");
 }
 func handleUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{ users }");
