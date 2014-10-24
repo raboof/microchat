@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	http.Handle("/microchat", http.FileServer(http.Dir("./static")))
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 	log.Println("Serving at localhost:8080...")
 	http.ListenAndServe(":8080", nil)
 }
