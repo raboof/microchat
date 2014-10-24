@@ -1,17 +1,20 @@
 package events
 
 import (
-    "github.com/Shopify/sarama"
     "log"
+    "github.com/Shopify/sarama"
+    "github.com/raboof/microchat/userrepo"
 )
 
 type DomainEventListener struct {
      quit chan bool
+     repo *userrepo.UserRepo
 }
 
 
-func NewDomainEventListener() *DomainEventListener {
+func NewDomainEventListener( repo *userrepo.UserRepo) *DomainEventListener {
     listnr := new(DomainEventListener)
+    listnr.repo = repo
 
     return listnr
 }

@@ -41,7 +41,7 @@ func main() {
 	user_repo.StoreUser(userrepo.NewUser("3", "name 3"))
 
         /* start listening for domain events in background */
-        eventListener := events.NewDomainEventListener()
+        eventListener := events.NewDomainEventListener( user_repo )
         eventListener.Start( "10.0.0.157:9092" );
 
         /* start listening for web-events */
