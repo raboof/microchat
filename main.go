@@ -1,15 +1,12 @@
 package main
 
 import (
-  "fmt"
-  "net/http"
+	"log"
+	"net/http"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-  fmt.Fprintf(w, "Go, world!") 
-}
-
 func main() {
-  http.HandleFunc("/", handler)
-  http.ListenAndServe(":8080", nil)
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+	log.Println("Serving at localhost:8080...")
+	http.ListenAndServe(":8080", nil)
 }
