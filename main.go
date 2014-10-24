@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/raboof/microchat/userrepo"
 	"log"
 	"net/http"
+	"github.com/raboof/microchat/userrepo"
+	"github.com/raboof/microchat/websocket"
 )
 
 func handleUser(user_repo *userrepo.UserRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionId := r.URL.Query().Get("sessionId")
-		fmt.Fprintf(w, "{ \"username\": \"" + user_repo.FetchUser(sessionId).Name + "\" }");
+		fmt.Fprintf(w, "{ \"username\": \""+user_repo.FetchUser(sessionId).Name+"\" }");
 	}
 }
 
@@ -32,6 +33,7 @@ func main() {
 	http.HandleFunc("/api/user", handleUser(user_repo))
 	http.HandleFunc("/api/users", handleUsers)
 	http.HandleFunc("/api/messages", handleMessages)
+	http.Handle("/api/ws", websocket.WebsocketHandler)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	log.Println("Serving at localhost:8088...")
 	log.Fatal(http.ListenAndServe(":8088", nil))
