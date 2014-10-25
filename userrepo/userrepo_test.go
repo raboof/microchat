@@ -13,7 +13,7 @@ func Test(t *testing.T) {
 	user := NewUser("1234", "Marc")
 	{
 		/* create new user */
-        repo.StoreUser(user)
+		repo.StoreUser(user)
 		users := repo.FetchUsers()
 		assert.Equal(t, 1, len(users))
 		assert.Equal(t, user.Name, users[0].Name)
@@ -24,7 +24,7 @@ func Test(t *testing.T) {
 
 	{
 		/* create new user again */
-        repo.StoreUser(user)
+		repo.StoreUser(user)
 		users := repo.FetchUsers()
 		assert.Equal(t, 1, len(users))
 		assert.Equal(t, user.Name, users[0].Name)
@@ -34,7 +34,7 @@ func Test(t *testing.T) {
 	user2 := NewUser("4321", "Eva")
 	{
 		/* create another user again */
-        repo.StoreUser(user2)
+		repo.StoreUser(user2)
 		users := repo.FetchUsers()
 		assert.Equal(t, 2, len(users))
 		assert.Equal(t, user.Name, users[0].Name)
@@ -45,7 +45,7 @@ func Test(t *testing.T) {
 		assert.Equal(t, user2.SessionId, found.SessionId)
 	}
 
-    {
+	{
 		user := NewUser("1234", "Marc")
 		repo.RemoveUser(user)
 		users := repo.FetchUsers()
@@ -54,5 +54,5 @@ func Test(t *testing.T) {
 		assert.Equal(t, user2.SessionId, found.SessionId)
 		u := repo.FetchUser("1234")
 		assert.Nil(t, u)
-    }
+	}
 }

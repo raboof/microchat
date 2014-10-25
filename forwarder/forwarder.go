@@ -1,8 +1,8 @@
 package forwarder
 
 import (
-	"log"
 	"github.com/raboof/microchat/userrepo"
+	"log"
 )
 
 type ForwarderI interface {
@@ -21,14 +21,14 @@ func NewForwarder(repo userrepo.UserRepoI) *Forwarder {
 }
 
 func (frwrdr *Forwarder) Forward(msg *userrepo.Message) {
-        sender := frwrdr.repo.FetchUser( msg.OriginatorSessionId ) 
+	sender := frwrdr.repo.FetchUser(msg.OriginatorSessionId)
 	if sender != nil {
-		log.Printf( "Adding msg to sender %s", sender.Name )
+		log.Printf("Adding msg to sender %s", sender.Name)
 		sender.AddMsgSent(msg)
 		users := frwrdr.repo.FetchUsers()
 		for _, rcver := range users {
-			if( rcver.SessionId != sender.SessionId ) {
-				log.Printf( "Adding msg to receiver %s", rcver.Name )
+			if rcver.SessionId != sender.SessionId {
+				log.Printf("Adding msg to receiver %s", rcver.Name)
 				/* store for fetching from UI */
 				rcver.AddMsgReceived(msg)
 

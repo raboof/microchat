@@ -1,10 +1,10 @@
 package websocket
 
 import (
-	"log"
 	"github.com/igm/pubsub"
-	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"github.com/raboof/microchat/userrepo"
+	"gopkg.in/igm/sockjs-go.v2/sockjs"
+	"log"
 	"net/http"
 )
 
@@ -18,10 +18,10 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 	users := make(map[string]*userrepo.User)
 	return func(session sockjs.Session) {
 		log.Println("new sockjs session established")
-		var closedSession = make(chan struct {})
+		var closedSession = make(chan struct{})
 		defer func() {
 			user := users[session.ID()]
-			if (user != nil) {
+			if user != nil {
 				chat.Publish("[info] " + user.Name + " left chat")
 			}
 		}()
@@ -42,9 +42,9 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 		for {
 			if msg, err := session.Recv(); err == nil {
 				user := users[session.ID()]
-				if (user == nil) {
+				if user == nil {
 					user = user_repo.FetchUser(msg)
-					if (user == nil) {
+					if user == nil {
 						log.Println("Not a user id", msg)
 						break
 					}

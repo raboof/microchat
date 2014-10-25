@@ -65,7 +65,7 @@ func handleMessage(user_repo *userrepo.UserRepo, forwarder *forwarder.Forwarder)
 					if user == nil {
 						http.Error(w, http.StatusText(404), 404)
 					} else {
-						log.Printf( "Forwarding msg %s\n", messageText )
+						log.Printf("Forwarding msg %s\n", messageText)
 						msg := userrepo.NewMessage(sessionId, messageText)
 						forwarder.Forward(msg)
 					}

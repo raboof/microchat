@@ -10,7 +10,7 @@ import (
 type DomainEventListenerI interface {
 	Start(addressPort string) error
 	Stop()
-	HandleEvent( key string, value string, topic string, partition int32, offset int64 )
+	HandleEvent(key string, value string, topic string, partition int32, offset int64)
 }
 
 type DomainEventListener struct {
@@ -55,16 +55,16 @@ func (listener *DomainEventListener) listenForEvents(hostnamePort string, topic 
 	log.Printf("Listen for events")
 	for {
 		event := <-consumer.Events()
-		listener.HandleEvent(string(event.Key), string(event.Value), event.Topic, event.Partition, event.Offset )
+		listener.HandleEvent(string(event.Key), string(event.Value), event.Topic, event.Partition, event.Offset)
 	}
 
 	return nil
 }
 
-func (listener *DomainEventListener) HandleEvent( key string,  value string, topic string, partition  int32, offset int64 ) {
+func (listener *DomainEventListener) HandleEvent(key string, value string, topic string, partition int32, offset int64) {
 
 	log.Printf("Received cosumer event with key:'%s', value:'%s', topic:'%s', partition: %d, offset: %d",
-					key, value, topic, partition, offset )
+		key, value, topic, partition, offset)
 
 	s := strings.Split(string(value), ",")
 	if len(s) < 3 {

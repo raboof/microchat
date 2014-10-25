@@ -5,10 +5,10 @@ import (
 )
 
 type User struct {
-	SessionId string
-	Name      string
-        SentMessages []Message	
-        ReceivedMessages []Message	
+	SessionId        string
+	Name             string
+	SentMessages     []Message
+	ReceivedMessages []Message
 }
 
 func NewUser(sessionId string, name string) *User {
@@ -20,27 +20,27 @@ func NewUser(sessionId string, name string) *User {
 	return user
 }
 
-func (user *User) AddMsgReceived( msg *Message ) {
-       user.ReceivedMessages = append( user.ReceivedMessages, *msg ) 
+func (user *User) AddMsgReceived(msg *Message) {
+	user.ReceivedMessages = append(user.ReceivedMessages, *msg)
 }
 
-func (user *User) AddMsgSent( msg *Message ) {
-       user.SentMessages = append( user.SentMessages, *msg ) 
+func (user *User) AddMsgSent(msg *Message) {
+	user.SentMessages = append(user.SentMessages, *msg)
 }
 
 type Message struct {
-        OriginatorSessionId string
-        MessageText string
-        Timestamp time.Time
+	OriginatorSessionId string
+	MessageText         string
+	Timestamp           time.Time
 }
 
-func NewMessage( originatorSessionId string, messageText string ) *Message {
-        msg := new(Message)
-        msg.OriginatorSessionId = originatorSessionId
-        msg.MessageText  = messageText
-        msg.Timestamp  = time.Now()
+func NewMessage(originatorSessionId string, messageText string) *Message {
+	msg := new(Message)
+	msg.OriginatorSessionId = originatorSessionId
+	msg.MessageText = messageText
+	msg.Timestamp = time.Now()
 
-        return msg
+	return msg
 }
 
 type UserRepoI interface {
