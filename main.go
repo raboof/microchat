@@ -77,9 +77,11 @@ func handleMessage(user_repo *userrepo.UserRepo, forwarder *forwarder.Forwarder)
 }
 
 func main() {
-	/* pre-provision */
+	/* cenral store of users and their messages */
 	var user_repo *userrepo.UserRepo
 	user_repo = userrepo.NewUserRepo()
+
+	/* pre-provision store for easy testing */
 	user_repo.StoreUser(userrepo.NewUser("5678", "Hans"))
 	user_repo.StoreUser(userrepo.NewUser("1234", "Grietje"))
 
