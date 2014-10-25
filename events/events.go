@@ -10,8 +10,7 @@ import (
 type DomainEventListenerI interface {
 	Start(addressPort string) error
 	Stop()
-	HandleUserLoggedIn(user *userrepo.User)
-	HandleUserLoggedOut(user *userrepo.User)
+	HandleEvent( key string, value string, topic string, partition int32, offset int64 )
 }
 
 type DomainEventListener struct {
@@ -56,19 +55,20 @@ func (listener *DomainEventListener) listenForEvents(hostnamePort string, topic 
 	log.Printf("Listen for events")
 	for {
 		event := <-consumer.Events()
-		listener.handleEvent(event)
+		listener.HandleEvent(string(event.Key), string(event.Value), event.Topic, event.Partition, event.Offset )
 	}
 
 	return nil
 }
 
-func (listener *DomainEventListener) handleEvent(event *sarama.ConsumerEvent) {
+func (listener *DomainEventListener) HandleEvent( key string,  value string, topic string, partition  int32, offset int64 ) {
 
-	log.Printf("Received event offset: %d, topic: %s, value: '%s'", event.Offset, event.Topic, event.Value)
+	log.Printf("Received cosumer event with key:'%s', value:'%s', topic:'%s', partition: %d, offset: %d",
+					key, value, topic, partition, offset )
 
-	s := strings.Split(string(event.Value), ",")
+	s := strings.Split(string(value), ",")
 	if len(s) < 3 {
-		log.Printf("Event incomplete: '%s'", event.Value)
+		log.Printf("Event incomplete: '%s'", value)
 	} else {
 		eventName, userName, sessionId := s[0], s[1], s[2]
 		user := userrepo.NewUser(sessionId, userName)
