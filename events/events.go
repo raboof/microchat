@@ -52,7 +52,7 @@ func (listener *KafkaEventListener) listenForEvents(hostnamePort string, topic s
 	defer consumer.Close()
 	defer mb.Close()
 
-	log.Printf("Starting listen for kafka events on %s", hostnamePort)
+	log.Printf("Start listening for kafka events on %s", hostnamePort)
 	for {
 		event := <-consumer.Events()
 		listener.handleEvent(string(event.Key), string(event.Value), event.Topic, event.Partition, event.Offset)
