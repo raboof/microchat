@@ -1,4 +1,5 @@
 package main
+
 // Command-line application implementing chat
 
 import (
@@ -12,7 +13,7 @@ import (
 	"strings"
 )
 
-func handleUser(user_repo *userrepo.UserRepo) http.HandlerFunc {
+func handleUser(user_repo userrepo.UserRepoI) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("method:%s, url:%s", r.Method, "users")
 		sessionId := r.URL.Query().Get("sessionId")
@@ -26,8 +27,8 @@ func handleUser(user_repo *userrepo.UserRepo) http.HandlerFunc {
 			fmt.Fprintf(w, "["+strings.Join(total, ", ")+"]")
 		} else {
 			/* fetch single user */
-			user := user_repo.FetchUser(sessionId)
-			if user == nil {
+			user, exists := user_repo.FetchUser(sessionId)
+			if exists == false {
 				http.Error(w, http.StatusText(404), 404)
 			} else {
 				fmt.Fprintf(w, "{ \"username\": \""+user.Name+"\" }")
@@ -36,14 +37,14 @@ func handleUser(user_repo *userrepo.UserRepo) http.HandlerFunc {
 	}
 }
 
-func handleMessage(user_repo *userrepo.UserRepo, forwarder *forwarder.Forwarder) http.HandlerFunc {
+func handleMessage(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("method:%s, url:%s", r.Method, "messages")
 		if r.Method == "GET" {
 			sessionId := r.URL.Query().Get("sessionId")
 			if sessionId != "" {
-				user := user_repo.FetchUser(sessionId)
-				if user == nil {
+				user, exists := user_repo.FetchUser(sessionId)
+				if exists == false {
 					http.Error(w, http.StatusText(404), 404)
 				} else {
 					fmt.Fprintf(w, "{ \"name\":\"%s\", \"receivedMsgCount\": %d, \"sentMsgCount\":%d }",
@@ -62,8 +63,8 @@ func handleMessage(user_repo *userrepo.UserRepo, forwarder *forwarder.Forwarder)
 				if sessionId == "" || messageText == "" {
 					http.Error(w, http.StatusText(400), 400)
 				} else {
-					user := user_repo.FetchUser(sessionId)
-					if user == nil {
+					_, exists := user_repo.FetchUser(sessionId)
+					if exists == false {
 						http.Error(w, http.StatusText(404), 404)
 					} else {
 						log.Printf("Forwarding msg %s\n", messageText)
@@ -79,8 +80,8 @@ func handleMessage(user_repo *userrepo.UserRepo, forwarder *forwarder.Forwarder)
 
 func main() {
 	/* cenral store of users and their messages */
-	var user_repo *userrepo.UserRepo
-	user_repo = userrepo.NewUserRepo()
+	repo := userrepo.NewUserRepo()
+	user_repo := userrepo.UserRepoI(repo)
 
 	/* pre-provision store for easy testing */
 	user_repo.StoreUser(userrepo.NewUser("5678", "Hans"))

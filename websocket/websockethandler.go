@@ -10,18 +10,18 @@ import (
 
 var chat pubsub.Publisher
 
-func WebsocketHandler(user_repo *userrepo.UserRepo) http.Handler {
+func WebsocketHandler(user_repo userrepo.UserRepoI) http.Handler {
 	return sockjs.NewHandler("/ws", sockjs.DefaultOptions, echoHandler(user_repo))
 }
 
-func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
-	users := make(map[string]*userrepo.User)
+func echoHandler(user_repo userrepo.UserRepoI) func(sockjs.Session) {
+	users := make(map[string]userrepo.User)
 	return func(session sockjs.Session) {
 		log.Println("new sockjs session established")
 		var closedSession = make(chan struct{})
 		defer func() {
-			user := users[session.ID()]
-			if user != nil {
+			user, ok := users[session.ID()]
+			if ok == true {
 				chat.Publish("[info] " + user.Name + " left chat")
 			}
 		}()
@@ -41,10 +41,10 @@ func echoHandler(user_repo *userrepo.UserRepo) func(sockjs.Session) {
 		}()
 		for {
 			if msg, err := session.Recv(); err == nil {
-				user := users[session.ID()]
-				if user == nil {
-					user = user_repo.FetchUser(msg)
-					if user == nil {
+				user, ok := users[session.ID()]
+				if ok == false {
+					user, exists := user_repo.FetchUser(msg)
+					if exists == false {
 						log.Println("Not a user id", msg)
 						break
 					}

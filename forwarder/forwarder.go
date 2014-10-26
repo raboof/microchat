@@ -21,8 +21,8 @@ func NewForwarder(repo userrepo.UserRepoI) *Forwarder {
 }
 
 func (frwrdr *Forwarder) Forward(msg *userrepo.Message) {
-	sender := frwrdr.repo.FetchUser(msg.OriginatorSessionId)
-	if sender != nil {
+	sender, exists := frwrdr.repo.FetchUser(msg.OriginatorSessionId)
+	if exists == true {
 		log.Printf("Adding msg to sender %s", sender.Name)
 		sender.AddMsgSent(msg)
 		users := frwrdr.repo.FetchUsers()

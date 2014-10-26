@@ -16,12 +16,12 @@ func NewUser(sessionId string, name string) *User {
 	user := new(User)
 	user.SessionId = sessionId
 	user.Name = name
-	user.SentMessages = []Message{}
-	user.ReceivedMessages = []Message{}
+	user.SentMessages = make([]Message, 10)
+	user.ReceivedMessages = make([]Message, 10)
 	return user
 }
 
-func (user *User) String() string {
+func (user User) String() string {
 	return fmt.Sprintf("{ User: SessionId: %s, Name: %s }",
 		user.SessionId, user.Name)
 }
@@ -49,57 +49,47 @@ func NewMessage(originatorSessionId string, messageText string) *Message {
 	return msg
 }
 
-func (msg *Message) String() string {
+func (msg Message) String() string {
 	return fmt.Sprintf("{ Message: OriginatorSessionId: %s, MessageText: %s, Timestamp: %s }",
 		msg.OriginatorSessionId, msg.MessageText, msg.Timestamp.String())
 }
 
 type UserRepoI interface {
-	FetchUser(sessionId string) *User
+	FetchUser(sessionId string) (User, bool)
 	FetchUsers() []User
 	StoreUser(user *User)
 	RemoveUser(user *User)
 }
 
 type UserRepo struct {
-	users []User
+	users map[string]User
 }
 
 func NewUserRepo() *UserRepo {
 	userrepo := new(UserRepo)
-	userrepo.users = []User{}
+	userrepo.users = make(map[string]User)
 
 	return userrepo
 }
 
-func (repo *UserRepo) FetchUser(sessionId string) *User {
-
-	for _, user := range repo.users {
-		if user.SessionId == sessionId {
-			return &user
-		}
-	}
-
-	return nil
+func (this UserRepo) FetchUser(sessionId string) (User, bool) {
+	user, ok := this.users[sessionId]
+	return user, ok
 }
 
-func (repo *UserRepo) FetchUsers() []User {
-	return repo.users
+func (this UserRepo) FetchUsers() []User {
+
+	list := make([]User, 0, len(this.users))
+	for _, user := range this.users {
+		list = append(list, user)
+	}
+	return list
 }
 
-func (repo *UserRepo) StoreUser(user *User) {
-	found := repo.FetchUser(user.SessionId)
-	if found == nil {
-		repo.users = append(repo.users, *user)
-	}
+func (this *UserRepo) StoreUser(user *User) {
+	this.users[user.SessionId] = *user
 }
 
-func (repo *UserRepo) RemoveUser(toBeRemoved *User) {
-	newUsers := []User{}
-	for _, user := range repo.users {
-		if user.SessionId != toBeRemoved.SessionId {
-			newUsers = append(newUsers, user)
-		}
-	}
-	repo.users = newUsers
+func (this *UserRepo) RemoveUser(toBeRemoved *User) {
+	delete(this.users, toBeRemoved.SessionId)
 }
