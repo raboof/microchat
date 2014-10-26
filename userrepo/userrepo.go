@@ -1,6 +1,7 @@
 package userrepo
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -18,6 +19,11 @@ func NewUser(sessionId string, name string) *User {
 	user.SentMessages = []Message{}
 	user.ReceivedMessages = []Message{}
 	return user
+}
+
+func (user *User) String() string {
+	return fmt.Sprintf("{ User: SessionId: %s, Name: %s }",
+		user.SessionId, user.Name)
 }
 
 func (user *User) AddMsgReceived(msg *Message) {
@@ -41,6 +47,11 @@ func NewMessage(originatorSessionId string, messageText string) *Message {
 	msg.Timestamp = time.Now()
 
 	return msg
+}
+
+func (msg *Message) String() string {
+	return fmt.Sprintf("{ Message: OriginatorSessionId: %s, MessageText: %s, Timestamp: %s }",
+		msg.OriginatorSessionId, msg.MessageText, msg.Timestamp.String())
 }
 
 type UserRepoI interface {
