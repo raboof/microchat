@@ -1,4 +1,5 @@
 package main
+// Command-line application implementing chat
 
 import (
 	"fmt"
