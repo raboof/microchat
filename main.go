@@ -78,24 +78,46 @@ func handleMessage(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder)
 	}
 }
 
-func main() {
-	/* cenral store of users and their messages */
-	repo := userrepo.NewUserRepo()
-	user_repo := userrepo.UserRepoI(repo)
+func handleEvent(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder) events.EventHandlerFunc {
 
-	/* pre-provision store for easy testing */
+	return func(key string, value string, topic string, partition int32, offset int64) {
+
+		log.Printf("Received cosumer event with key:'%s', value:'%s', topic:'%s', partition: %d, offset: %d",
+			key, value, topic, partition, offset)
+
+		s := strings.Split(string(value), ",")
+		if len(s) < 3 {
+			log.Printf("Event incomplete: '%s'", value)
+		} else {
+			eventName, userName, sessionId := s[0], s[1], s[2]
+			user := userrepo.NewUser(sessionId, userName)
+			if eventName == "UserLoggedIn" {
+				user_repo.StoreUser(user)
+			} else if eventName == "UserLoggedOut" {
+				user_repo.RemoveUser(user)
+			} else {
+				log.Printf("Unrecognized event %s", eventName)
+			}
+		}
+	}
+}
+
+func main() {
+	// cenral store of users and their messages
+	user_repo := userrepo.NewUserRepo()
+
+	// pre-provision store for easy testing
 	user_repo.StoreUser(userrepo.NewUser("5678", "Hans"))
 	user_repo.StoreUser(userrepo.NewUser("1234", "Grietje"))
 
-	/* start listening for domain events in background */
-	eventListener := events.NewDomainEventListener(user_repo)
-	//eventListener.Start("10.0.0.157:9092")
-	eventListener.Start("169.254.101.81:9092")
-
-	/* forwarder  responssible for forwarding messages to logged in users */
+	// forwarder  responssible for forwarding messages to logged in users
 	forwarder := forwarder.NewForwarder(user_repo)
 
-	/* start listening for web-events */
+	// start listening for domain events in background
+	eventListener := events.NewKafkaEventListener(handleEvent(user_repo, forwarder))
+	go eventListener.ListenAndServe("169.254.101.81:9092")
+
+	// start listening for web-events
 	http.HandleFunc("/api/user", handleUser(user_repo))
 	http.HandleFunc("/api/message", handleMessage(user_repo, forwarder))
 	http.Handle("/ws/", websocket.WebsocketHandler(user_repo))
