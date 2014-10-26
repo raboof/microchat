@@ -1,3 +1,7 @@
+// Events packages
+//
+// Reads events from kafka queue
+// based on these events the internal model is composed
 package events
 
 import (
