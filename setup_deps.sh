@@ -10,5 +10,5 @@ for pkg in ${PKGS}
 do
    go get ${pkg}
    cd $GOPATH/src/${pkg}
-   go clean; go build; go install
+   go clean; go fmt; go build; go install
 done

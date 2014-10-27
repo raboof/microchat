@@ -24,15 +24,19 @@ func NewForwarder(repo userrepo.UserRepoI) *Forwarder {
 
 func (this *Forwarder) ForwardMsgSent(msg userrepo.Message) {
 	sender, exists := this.repo.FetchUser(msg.OriginatorSessionId)
-	if exists == true {
+	if exists == false {
+		log.Printf("Forwarding to unknown user session %s", msg.OriginatorSessionId)
+	} else {
 		log.Printf("Adding msg to sender %s", sender.Name)
 		sender.AddMsgSent(&msg)
+		this.repo.StoreUser(&sender)
 		users := this.repo.FetchUsers()
 		for _, rcver := range users {
 			if rcver.SessionId != sender.SessionId {
 				log.Printf("Adding msg to receiver %s", rcver.Name)
 				/* store for fetching from UI */
 				rcver.AddMsgReceived(&msg)
+				this.repo.StoreUser(&rcver)
 
 				/* TODO: forward to web-socket */
 			}
@@ -41,7 +45,9 @@ func (this *Forwarder) ForwardMsgSent(msg userrepo.Message) {
 }
 
 func (this *Forwarder) ForwardUserLoggedIn(user userrepo.User) {
+	log.Printf("ForwardUserLoggedIn %s", user.Name)
 }
 
 func (this *Forwarder) ForwardUserLoggedOut(user userrepo.User) {
+	log.Printf("ForwardUserLoggedOut %s", user.Name)
 }

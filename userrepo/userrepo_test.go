@@ -58,4 +58,22 @@ func Test(t *testing.T) {
 		_, okAgain := repo.FetchUser("1234")
 		assert.False(t, okAgain)
 	}
+
+	{
+		user := NewUser("1234", "Marc")
+		repo.StoreUser(user)
+		found, ok := repo.FetchUser(user.SessionId)
+		assert.True(t, ok)
+		assert.Equal(t, 0, len(found.ReceivedMessages))
+		assert.Equal(t, 0, len(found.SentMessages))
+
+		found.AddMsgReceived(NewMessage("1234", "Message received 1"))
+		found.AddMsgSent(NewMessage("1234", "Message sent 2"))
+		repo.StoreUser(&found)
+
+		foundAgain, ok := repo.FetchUser(user.SessionId)
+		assert.True(t, ok)
+		assert.Equal(t, 1, len(foundAgain.ReceivedMessages))
+		assert.Equal(t, 1, len(foundAgain.SentMessages))
+	}
 }

@@ -17,8 +17,8 @@ func NewUser(sessionId string, name string) *User {
 	user := new(User)
 	user.SessionId = sessionId
 	user.Name = name
-	user.SentMessages = make([]Message, 10)
-	user.ReceivedMessages = make([]Message, 10)
+	user.SentMessages = make([]Message, 0, 10)
+	user.ReceivedMessages = make([]Message, 0, 10)
 	return user
 }
 
