@@ -112,7 +112,7 @@ func main() {
 	user_repo.StoreUser(userrepo.NewUser("5678", "Hans"))
 	user_repo.StoreUser(userrepo.NewUser("1234", "Grietje"))
 
-	// forwarder  responssible for forwarding messages to logged in users
+	// forwarder is responssible for forwarding messages to other parts of the application
 	forwarder := forwarder.NewForwarder(user_repo)
 
 	// start listening for domain events in background
