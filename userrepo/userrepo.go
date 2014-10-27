@@ -2,6 +2,7 @@ package userrepo
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -62,6 +63,7 @@ type UserRepoI interface {
 }
 
 type UserRepo struct {
+	m     sync.Mutex
 	users map[string]User
 }
 
@@ -73,11 +75,16 @@ func NewUserRepo() *UserRepo {
 }
 
 func (this UserRepo) FetchUser(sessionId string) (User, bool) {
+	this.m.Lock()
+	defer this.m.Unlock()
+
 	user, ok := this.users[sessionId]
 	return user, ok
 }
 
 func (this UserRepo) FetchUsers() []User {
+	this.m.Lock()
+	defer this.m.Unlock()
 
 	list := make([]User, 0, len(this.users))
 	for _, user := range this.users {
@@ -87,9 +94,15 @@ func (this UserRepo) FetchUsers() []User {
 }
 
 func (this *UserRepo) StoreUser(user *User) {
+	this.m.Lock()
+	defer this.m.Unlock()
+
 	this.users[user.SessionId] = *user
 }
 
 func (this *UserRepo) RemoveUser(toBeRemoved *User) {
+	this.m.Lock()
+	defer this.m.Unlock()
+
 	delete(this.users, toBeRemoved.SessionId)
 }

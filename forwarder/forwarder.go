@@ -6,7 +6,9 @@ import (
 )
 
 type ForwarderI interface {
-	Forward(msg *userrepo.Message)
+	ForwardUserLoggedIn(user userrepo.User)
+	ForwardUserLoggedOut(user userrepo.User)
+	ForwardMsgSent(msg userrepo.Message)
 }
 
 type Forwarder struct {
@@ -20,20 +22,26 @@ func NewForwarder(repo userrepo.UserRepoI) *Forwarder {
 	return frwrdr
 }
 
-func (frwrdr *Forwarder) Forward(msg *userrepo.Message) {
-	sender, exists := frwrdr.repo.FetchUser(msg.OriginatorSessionId)
+func (this *Forwarder) ForwardMsgSent(msg userrepo.Message) {
+	sender, exists := this.repo.FetchUser(msg.OriginatorSessionId)
 	if exists == true {
 		log.Printf("Adding msg to sender %s", sender.Name)
-		sender.AddMsgSent(msg)
-		users := frwrdr.repo.FetchUsers()
+		sender.AddMsgSent(&msg)
+		users := this.repo.FetchUsers()
 		for _, rcver := range users {
 			if rcver.SessionId != sender.SessionId {
 				log.Printf("Adding msg to receiver %s", rcver.Name)
 				/* store for fetching from UI */
-				rcver.AddMsgReceived(msg)
+				rcver.AddMsgReceived(&msg)
 
 				/* TODO: forward to web-socket */
 			}
 		}
 	}
+}
+
+func (this *Forwarder) ForwardUserLoggedIn(user userrepo.User) {
+}
+
+func (this *Forwarder) ForwardUserLoggedOut(user userrepo.User) {
 }

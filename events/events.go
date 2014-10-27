@@ -61,6 +61,6 @@ func (listener *KafkaEventListener) listenForEvents(hostnamePort string, topic s
 	return nil
 }
 
-func (listener *KafkaEventListener) ListenAndServe(hostnamePort string) error {
+func (listener *KafkaEventListener) ConnectAndReceive(hostnamePort string) error {
 	return listener.listenForEvents(hostnamePort, "my_topic", "client_id", "my_consumer_group")
 }

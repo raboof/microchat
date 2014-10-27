@@ -69,7 +69,7 @@ func handleMessage(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder)
 					} else {
 						log.Printf("Forwarding msg %s\n", messageText)
 						msg := userrepo.NewMessage(sessionId, messageText)
-						forwarder.Forward(msg)
+						forwarder.ForwardMsgSent(*msg)
 					}
 				}
 			}
@@ -78,7 +78,7 @@ func handleMessage(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder)
 	}
 }
 
-func handleEvent(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder) events.EventHandlerFunc {
+func handleEvent(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) events.EventHandlerFunc {
 
 	return func(key string, value string, topic string, partition int32, offset int64) {
 
@@ -93,8 +93,10 @@ func handleEvent(user_repo userrepo.UserRepoI, forwarder *forwarder.Forwarder) e
 			user := userrepo.NewUser(sessionId, userName)
 			if eventName == "UserLoggedIn" {
 				user_repo.StoreUser(user)
+				forwarder.ForwardUserLoggedIn(*user)
 			} else if eventName == "UserLoggedOut" {
 				user_repo.RemoveUser(user)
+				forwarder.ForwardUserLoggedOut(*user)
 			} else {
 				log.Printf("Unrecognized event %s", eventName)
 			}
@@ -115,7 +117,7 @@ func main() {
 
 	// start listening for domain events in background
 	eventListener := events.NewKafkaEventListener(handleEvent(user_repo, forwarder))
-	go eventListener.ListenAndServe("169.254.101.81:9092")
+	go eventListener.ConnectAndReceive("169.254.101.81:9092")
 
 	// start listening for web-events
 	http.HandleFunc("/api/user", handleUser(user_repo))
