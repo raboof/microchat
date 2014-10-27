@@ -16,7 +16,25 @@ import (
 	"strings"
 )
 
-func handleUser(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) http.HandlerFunc {
+func processChatMessage(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI,
+	sender userrepo.User, msgText string) {
+	msg := userrepo.NewMessage(sender.SessionId, msgText)
+	sender.AddMsgSent(msg)
+	repo.StoreUser(&sender)
+	users := repo.FetchUsers()
+	for _, rcver := range users {
+		if rcver.SessionId != sender.SessionId {
+			// store for fetching from UI
+			rcver.AddMsgReceived(msg)
+			repo.StoreUser(&rcver)
+
+			//forward to other interested parties
+			frwrdr.ForwardMsgSent(*msg)
+		}
+	}
+}
+
+func onRestRequest(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			sessionId := r.URL.Query().Get("sessionId")
@@ -53,13 +71,11 @@ func handleUser(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) ht
 				if strings.TrimSpace(sessionId) == "" || strings.TrimSpace(messageText) == "" {
 					http.Error(w, http.StatusText(400), 400)
 				} else {
-					_, exists := user_repo.FetchUser(sessionId)
+					user, exists := user_repo.FetchUser(sessionId)
 					if exists == false {
 						http.Error(w, http.StatusText(404), 404)
 					} else {
-						log.Printf("Forwarding msg %s\n", messageText)
-						msg := userrepo.NewMessage(sessionId, messageText)
-						forwarder.ForwardMsgSent(*msg)
+						processChatMessage(user_repo, forwarder, user, messageText)
 					}
 				}
 			}
@@ -67,7 +83,7 @@ func handleUser(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) ht
 	}
 }
 
-func handleEvent(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) events.EventHandlerFunc {
+func onEvent(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) events.EventHandlerFunc {
 
 	return func(key string, value string, topic string, partition int32, offset int64) {
 
@@ -94,20 +110,20 @@ func handleEvent(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) e
 }
 
 func startEventListener(user_repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
-	eventListener := events.NewKafkaEventListener(handleEvent(user_repo, frwrdr))
+	eventListener := events.NewKafkaEventListener(onEvent(user_repo, frwrdr))
 	eventListener.ConnectAndReceive("169.254.101.81:9092")
 }
 
 func startWebServer(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
 	// start listening for web-events
-	http.HandleFunc("/api/user", handleUser(repo, frwrdr))
+	http.HandleFunc("/api/user", onRestRequest(repo, frwrdr))
 	http.Handle("/ws/", websocket.WebsocketHandler(repo))
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	log.Println("Start listening for web events at localhost:8088...")
 	log.Fatal(http.ListenAndServe(":8088", nil))
 }
 
-func readComamndLineInput(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
+func startCommandLineReader(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
 	bio := bufio.NewReader(os.Stdin)
 
 	var idx int64
@@ -121,12 +137,12 @@ func readComamndLineInput(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) 
 		if len(parts) >= 1 && len(strings.TrimSpace(parts[0])) > 0 {
 			cmd := fmt.Sprintf("%s,user_%d,uid", parts[0], idx)
 			if parts[0] == "UserLoggedIn" {
-				handleEvent(repo, frwrdr)("", cmd, "user", 1, idx)
+				onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
 			} else if parts[0] == "UserLoggedOut" {
-				handleEvent(repo, frwrdr)("", cmd, "user", 1, idx)
+				onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
 			} else if parts[0] == "ChatMessage" {
-				frwrdr.ForwardMsgSent(*userrepo.NewMessage("uid",
-					fmt.Sprintf("test message %d", idx)))
+				user, _ := repo.FetchUser("uid")
+				processChatMessage(repo, frwrdr, user, fmt.Sprintf("test message %d", idx))
 			} else {
 				fmt.Printf("Commands:\n\t%s : %s\n\t%s : %s\n\t%s : %s\n",
 					"UserLoggedIn", "simulate logged-in event",
@@ -154,6 +170,6 @@ func main() {
 	go startWebServer(userRepo, forwarder)
 
 	// read commands on stdin
-	readComamndLineInput(userRepo, forwarder)
+	startCommandLineReader(userRepo, forwarder)
 
 }
