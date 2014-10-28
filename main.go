@@ -5,13 +5,16 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/raboof/microchat/events"
 	"github.com/raboof/microchat/forwarder"
 	"github.com/raboof/microchat/userrepo"
 	"github.com/raboof/microchat/websocket"
-	"log"
 	"net/http"
+
+	"log"
 	"os"
 	"strings"
 )
@@ -28,59 +31,75 @@ func processChatMessage(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI,
 			rcver.AddMsgReceived(msg)
 			repo.StoreUser(&rcver)
 
-			//forward to other interested parties
-			frwrdr.ForwardMsgSent(*msg)
+		}
+	}
+	//forward to other interested parties
+	frwrdr.ForwardMsgSent(*msg)
+}
+
+func onPostMessage(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI, sessionId string, messageText string) (int, string) {
+	if strings.TrimSpace(sessionId) == "" || strings.TrimSpace(messageText) == "" {
+		return 400, "Invalid parameters"
+	} else {
+		user, exists := repo.FetchUser(sessionId)
+		if exists == false {
+			return 404, "Not found"
+		} else {
+			processChatMessage(repo, frwrdr, user, messageText)
+			return 200, ""
 		}
 	}
 }
 
-func onRestRequest(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			sessionId := r.URL.Query().Get("sessionId")
-			if strings.TrimSpace(sessionId) != "" {
-				user, exists := user_repo.FetchUser(sessionId)
-				if exists == false {
-					http.Error(w, http.StatusText(404), 404)
-				} else {
-					jsonData, err := json.Marshal(user)
-					if err != nil {
-						http.Error(w, http.StatusText(500), 500)
-					}
-					fmt.Fprintf(w, string(jsonData))
-				}
-			} else {
-				users := user_repo.FetchUsers()
-				userNames := make([]string, 0, len(users))
-				for i := range users {
-					userNames = append(userNames, users[i].Name)
-				}
-				jsonData, err := json.Marshal(userNames)
-				if err != nil {
-					http.Error(w, http.StatusText(500), 500)
-				}
-				fmt.Fprintf(w, string(jsonData))
-			}
-		} else if r.Method == "POST" {
-			err := r.ParseForm()
+func onGetUser(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI, sessionId string) (int, string) {
+	if strings.TrimSpace(sessionId) == "" {
+		return 400, "Invalid parameters"
+	} else {
+		user, exists := repo.FetchUser(sessionId)
+		if exists == false {
+			return 404, "Not found"
+		} else {
+			jsonData, err := json.Marshal(user)
 			if err != nil {
-				http.Error(w, http.StatusText(400), 400)
-			} else {
-				sessionId := r.PostForm.Get("sessionId")
-				messageText := r.PostForm.Get("messageText")
-				if strings.TrimSpace(sessionId) == "" || strings.TrimSpace(messageText) == "" {
-					http.Error(w, http.StatusText(400), 400)
-				} else {
-					user, exists := user_repo.FetchUser(sessionId)
-					if exists == false {
-						http.Error(w, http.StatusText(404), 404)
-					} else {
-						processChatMessage(user_repo, forwarder, user, messageText)
-					}
-				}
+				return 00, "Marshalling error"
 			}
+			return 200, string(jsonData)
 		}
 	}
+}
+
+func onGetAllUsers(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) (int, string) {
+	users := repo.FetchUsers()
+	userNames := make([]string, 0, len(users))
+	for i := range users {
+		userNames = append(userNames, users[i].Name)
+	}
+	jsonData, err := json.Marshal(userNames)
+	if err != nil {
+		return 500, "Marshalling error"
+	}
+	return 200, string(jsonData)
+}
+
+func listenAndServerRest(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
+	router := gin.Default()
+	apiv2 := router.Group("/apiv2")
+	{
+		apiv2.POST("/usersession/:sessionId/message", func(c *gin.Context) {
+			sessionId := c.Params.ByName("sessionId")
+			messageText := c.Params.ByName("messageText")
+			c.String(onPostMessage(repo, frwrdr, sessionId, messageText))
+		})
+		apiv2.GET("/usersession/:sessionId", func(c *gin.Context) {
+			sessionId := c.Params.ByName("sessionId")
+			c.String(onGetUser(repo, frwrdr, sessionId))
+		})
+		apiv2.GET("/usersession", func(c *gin.Context) {
+			c.String(onGetAllUsers(repo, frwrdr))
+		})
+	}
+	log.Println("Start listening for rest events at localhost:8089...")
+	router.Run(":8089")
 }
 
 func onEvent(user_repo userrepo.UserRepoI, forwarder forwarder.ForwarderI) events.EventHandlerFunc {
@@ -114,43 +133,68 @@ func startEventListener(user_repo userrepo.UserRepoI, frwrdr forwarder.Forwarder
 	eventListener.ConnectAndReceive("169.254.101.81:9092")
 }
 
-func startWebServer(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
-	// start listening for web-events
-	http.HandleFunc("/api/user", onRestRequest(repo, frwrdr))
-	http.Handle("/ws/", websocket.WebsocketHandler(repo))
-	http.Handle("/", http.FileServer(http.Dir("./static")))
-	log.Println("Start listening for web events at localhost:8088...")
-	log.Fatal(http.ListenAndServe(":8088", nil))
+func readCommand(r *bufio.Reader) (string, string, error) {
+	line, _, err := r.ReadLine()
+	if err != nil {
+		return "", "", err
+	}
+	parts := strings.Split(string(line), " ")
+	if len(parts) < 1 || len(strings.TrimSpace(parts[0])) == 0 {
+		return "", "", errors.New("incomplete command")
+	}
+	if len(parts) >= 2 && len(strings.TrimSpace(parts[1])) > 0 {
+		return parts[0], parts[1], nil
+	}
+	return parts[0], "", nil
 }
 
 func startCommandLineReader(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
-	bio := bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(os.Stdin)
 
 	var idx int64
 	for idx = 0; ; idx++ {
 		fmt.Printf("cli> ")
-		line, _, err := bio.ReadLine()
-		if err != nil {
-			break
-		}
-		parts := strings.Split(string(line), " ")
-		if len(parts) >= 1 && len(strings.TrimSpace(parts[0])) > 0 {
-			cmd := fmt.Sprintf("%s,user_%d,uid", parts[0], idx)
-			if parts[0] == "UserLoggedIn" {
-				onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
-			} else if parts[0] == "UserLoggedOut" {
-				onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
-			} else if parts[0] == "ChatMessage" {
-				user, _ := repo.FetchUser("uid")
-				processChatMessage(repo, frwrdr, user, fmt.Sprintf("test message %d", idx))
+		command, uid, err := readCommand(reader)
+		if err == nil {
+			if len(strings.TrimSpace(uid)) == 0 {
+				uid = "ABC"
+			}
+			cmd := fmt.Sprintf("%s,%s,%s", command, uid, uid)
+			user, userExists := repo.FetchUser(uid)
+			if command == "UserLoggedIn" {
+				if userExists == true {
+					fmt.Printf("User %s already logged in\n", uid)
+				} else {
+					onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
+				}
+			} else if command == "UserLoggedOut" {
+				if userExists == false {
+					fmt.Printf("User %s not logged in\n", uid)
+				} else {
+					onEvent(repo, frwrdr)("", cmd, "user", 1, idx)
+				}
+			} else if command == "ChatMessage" {
+				if userExists == false {
+					fmt.Printf("User %s not logged in\n", uid)
+				} else {
+					processChatMessage(repo, frwrdr, user, fmt.Sprintf("test message %d", idx))
+				}
 			} else {
 				fmt.Printf("Commands:\n\t%s : %s\n\t%s : %s\n\t%s : %s\n",
-					"UserLoggedIn", "simulate logged-in event",
-					"ChatMessage", "simulate chat-msg",
-					"UserLoggedOut", "simulatelogged-out event")
+					"UserLoggedIn [sessionName]", "simulate logged-in event",
+					"ChatMessage [sessionName]", "simulate chat-msg",
+					"UserLoggedOut [sessionName]", "simulatelogged-out event")
 			}
 		}
 	}
+}
+
+func listenAndServerWeb(repo userrepo.UserRepoI, frwrdr forwarder.ForwarderI) {
+	// start listening for web-events
+	http.Handle("/ws/", websocket.WebsocketHandler(repo))
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+	log.Println("Start listening for web events at localhost:8088...")
+	log.Fatal(http.ListenAndServe(":8088", nil))
 }
 
 func main() {
@@ -166,10 +210,10 @@ func main() {
 	// start listening for domain events in background
 	go startEventListener(userRepo, forwarder)
 
-	// start serving web requests
-	go startWebServer(userRepo, forwarder)
+	// start listening using gin
+	go listenAndServerWeb(userRepo, forwarder)
+	go listenAndServerRest(userRepo, forwarder)
 
 	// read commands on stdin
 	startCommandLineReader(userRepo, forwarder)
-
 }

@@ -7,10 +7,10 @@ import (
 )
 
 type User struct {
-	SessionId        string
-	Name             string
-	SentMessages     []Message
-	ReceivedMessages []Message
+    SessionId        string `json:"sessionId" binding:"required"`
+    Name             string `json:"name" binding:"required"`
+    SentMessages     []Message `json:"sent" binding:"required"`
+    ReceivedMessages []Message `json:"received" binding:"required"`
 }
 
 func NewUser(sessionId string, name string) *User {
@@ -36,9 +36,9 @@ func (user *User) AddMsgSent(msg *Message) {
 }
 
 type Message struct {
-	OriginatorSessionId string
-	MessageText         string
-	Timestamp           time.Time
+    OriginatorSessionId string `json:"sender" binding:"required"`
+    MessageText         string `json:"text" binding:"required"`
+    Timestamp           time.Time `json:"timestamp" binding:"required"`
 }
 
 func NewMessage(originatorSessionId string, messageText string) *Message {
