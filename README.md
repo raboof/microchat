@@ -12,11 +12,11 @@ In order to achieve this, components do not communicate directly with each other
 So in our casse authentication-component provides a UI for subscribing and logging in and out.
 Successfull login and logout are broadcasted as "UserLoggedIn"  and "UserLoggedOut"-evens.
 After successfull login, the customer will be directed to the chat application.
-The chat application will build a list of active users with their messages in memory.
-Nothing is persisted.
 
 ### Chat component
-The chat-component provides a UI and restfull-service to be able to do chat. In addition this, it listen for user-events (=UserLoggedIn and UserLoggedOut events).
+The chat-component provides a chat UI (including a restfull-service to be able to do chat). 
+In addition this, it listen for user-events (=UserLoggedIn and UserLoggedOut events). Based on these events the application will build a list of active chatting users in memory. Chat messages are added to ech user
+After a restart teh application will completely rebuild the model based on historic user-events.
 
 ### Infrastructure
 We use a Kafka-queue to distribute events from producer to consumers. 
@@ -38,7 +38,7 @@ We use a Kafka-queue to distribute events from producer to consumers.
 ## Interfaces
 
 ### Web interface
-GET /
+GET / : web user-interface to perform chat
 
 ### Rest interface
     GET /apiv2/usersession/ : return all logged in users
@@ -49,7 +49,7 @@ GET /
 
 ### Event interface
 
-The application will connect to kafka event-queue on 169.254.101.81:9092 on topic "my_topic"
+The application will connect to kafka event-queue on 169.254.101.81:9092 on topic "user"
     
     UserLoggedIn: received from authentication-subsystem via kafka
     
